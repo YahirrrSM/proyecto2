@@ -3,7 +3,8 @@ program osciladorforzado
 !programa
 implicit none
 !Definimos las variables a utilizar
-real :: t0, t, h, v, theta0, v0, x1, x2, x3, f, tau, pi, ajuste
+real :: t0, t, h, v, theta0, v0, x1, x2, x3
+real :: f, tau, pi, ajuste
 integer :: i, j, n, p
 !Declaramos los vectores de Xn y K1, K2, K3, K4
 real, allocatable, dimension(:,:) :: x
@@ -18,8 +19,8 @@ f = 1/(6*pi)
 t = t0
 x(1, 0) = theta0 !por como definimos X1 = angulo
 x(2, 0) = v0  !El cambio de theta en el tiempo t= 0
-              !que podemos interpretar como una velocidad
-              !de cambio, que es 0 en el tiempo inicial
+          !que podemos interpretar como una velocidad
+          !de cambio, que es 0 en el tiempo inicial
 x(3, 0) = 2.0 * pi * f * t !por como definimos x3
 !Apertura de los archivos para escritura
 open(200, file="positioin.dat")
@@ -35,7 +36,7 @@ do i = 1, n
     x2 = x(2, i-1)
     x3 = x(3, i-1)
 
-    ! Cálculo de las K según las ecuaciones vistas en clase
+! Cálculo de las K 
     k(1,1) = fun1(x1, x2)
     k(2,1) = fun2(x1, x2, v, tau, f, t)  
 !Solo la fun2 depende de otras variables
