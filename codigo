@@ -1,0 +1,106 @@
+program osciladorforzado
+!Definimos todas las variables que usaremos en el 
+!programa
+implicit none
+!Definimos las variables a utilizar
+real :: t0, t, h, v, theta0, v0, x1, x2, x3, f, tau, pi, ajuste
+integer :: i, j, n, p
+
+!Declaramos los vectores de Xn y K1, K2, K3, K4
+real, allocatable, dimension(:,:) :: x
+real, allocatable, dimension(:,:) :: k
+
+!Leemos las variables a utilizar
+open(100, file ="variables.inp")
+read(100,*)
+read(100,*)n,h,v,pi,theta0,v0,t0,tau
+!Alojamos los vectores x y k 
+allocate(x(1:3, 0:n), k(1:3, 0:4))
+
+f = 1/(6*pi)
+t = t0
+
+x(1, 0) = theta0 !por como definimos X1 = angulo
+x(2, 0) = v0  !El cambio de theta en el tiempo t= 0
+              !que podemos interpretar como una velocidad
+              !de cambio, que es 0 en el tiempo inicial
+x(3, 0) = 2.0 * pi * f * t !por como definimos x3
+
+!Apertura de los archivos para escritura
+open(200, file="positioin.dat")
+open(300, file = "espaciofase.dat")
+!Hacemos la iteración del método
+do i = 1, n
+
+
+    x(3, i-1) = 2.0 * pi * f * t !Vease que X3 en realidad depende del tiempo
+                                 !así que necesita actualizarse en cada retorno 
+
+    !Iteración sobre X1,2,3
+    x1 = x(1, i-1)
+    x2 = x(2, i-1)
+    x3 = x(3, i-1)
+
+    ! Cálculo de las K según las ecuaciones vistas en clase
+    k(1,1) = fun1(x1, x2)
+    k(2,1) = fun2(x1, x2, v, tau, f, t)  !Solo la fun2 depende de otras variables
+    k(3,1) = fun3(x1, x2)
+        
+    x1 = x(1, i-1) + k(1,1)*h/2.0
+    x2 = x(2, i-1) + k(2,1)*h/2.0
+    x3 = x(3, i-1) + k(3,1)*h/2.0
+
+    k(1,2) = fun1(x1, x2)
+    k(2,2) = fun2(x1, x2, v, tau, f, t + h/2.0)
+    k(3,2) = fun3(x1, x2)
+
+    x1 = x(1, i-1) +k(1,2)*h/2.0
+    x2 = x(2, i-1) +k(2,2)*h/2.0
+    x3 = x(3, i-1) +k(3,2)*h/2.0
+
+    k(1,3) = fun1(x1, x2)
+    k(2,3) = fun2(x1, x2, v, tau, f, t + h/2.0)
+    k(3,3) = fun3(x1, x2)
+    
+    x1 = x(1, i-1) + k(1,3)*h
+    x2 = x(2, i-1) + k(2,3)*h
+    x3 = x(3, i-1) + k(3,3)*h
+
+    k(1,4) = fun1(x1, x2)
+
+    k(3,4) = fun3(x1, x2)
+
+    !La segunda parte de xj = xj +h/6(....)
+    advance: do j = 1, 3
+    x(j,i) = x(j,i-1) + h*(k(j,1)+2.0*k(j,2)+2.0*k(j,3) + k(j,4))/6.0
+end do advance 
+!Actualizamos el tiempo en intervalos de h
+    t = t + h
+
+ ajuste = mod(x(1,i-1), 2*pi)
+   
+    write(200, *) t, ajuste  !Escribimos el valor del ángulo cada tiempo
+    write(300,*) ajuste, x(2, i-1) !Escribimos la velocidad vs angulo
+end do
+     
+
+close(200)
+
+contains
+!Definimos las funciones
+function fun1(x1, x2) result(y)
+    real :: x1, x2, y
+    y = x2
+end function fun1
+
+function fun2(x1, x2, v, tau, f, t) result(y)
+    real :: x1, x2, v, tau, f, t, y
+    y = tau * sin(2 * pi * f * t) - v * x2 - sin(x1)
+end function fun2
+
+function fun3(x1, x2) result(y)
+    real :: x1, x2, y
+    y = 2.0 * pi * f  ! Constante
+end function fun3
+
+end program osciladorforzado
